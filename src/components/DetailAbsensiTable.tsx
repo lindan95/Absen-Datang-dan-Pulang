@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { StudentAbsenStatus } from '../types';
 import { downloadFilteredAbsensiPDF } from '../utils/pdfExport';
-import { ListChecks, MessageCircle, Download, Search } from 'lucide-react';
+import { ListChecks, MessageCircle, Download, Search, FileSpreadsheet } from 'lucide-react';
 
 interface DetailAbsensiTableProps {
   listSiswa: StudentAbsenStatus[];
@@ -9,6 +9,8 @@ interface DetailAbsensiTableProps {
   onOpenKeterangan: (student: StudentAbsenStatus, defaultStatus: 'SAKIT' | 'IZIN') => void;
   onOpenIzinPulang: (student: StudentAbsenStatus) => void;
   onOpenWABatch: (jenis: 'ALFA' | 'BOLOS') => void;
+  statusFilter?: string;
+  onStatusFilterChange?: (status: string) => void;
 }
 
 export function DetailAbsensiTable({
@@ -17,10 +19,28 @@ export function DetailAbsensiTable({
   onOpenKeterangan,
   onOpenIzinPulang,
   onOpenWABatch,
+  statusFilter,
+  onStatusFilterChange,
 }: DetailAbsensiTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKelas, setSelectedKelas] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [internalStatus, setInternalStatus] = useState(statusFilter || '');
+
+  // Keep internal status in sync when external statusFilter changes
+  useEffect(() => {
+    if (statusFilter !== undefined) {
+      setInternalStatus(statusFilter);
+    }
+  }, [statusFilter]);
+
+  const selectedStatus = statusFilter !== undefined ? statusFilter : internalStatus;
+
+  const handleStatusChange = (newStatus: string) => {
+    setInternalStatus(newStatus);
+    if (onStatusFilterChange) {
+      onStatusFilterChange(newStatus);
+    }
+  };
 
   // Extract unique classes
   const availableClasses = useMemo(() => {
@@ -94,6 +114,33 @@ export function DetailAbsensiTable({
     });
   };
 
+  const handleDownloadCSV = () => {
+    if (filteredStudents.length === 0) {
+      alert('Tidak ada data yang sesuai untuk diekspor ke CSV.');
+      return;
+    }
+
+    const headers = ['No', 'NISN', 'Nama Siswa', 'Kelas', 'Jam Datang', 'Jam Pulang', 'Status'];
+    const rows = filteredStudents.map((s, index) => [
+      index + 1,
+      `"${String(s.nisn || '').replace(/"/g, '""')}"`,
+      `"${String(s.nama || '').replace(/"/g, '""')}"`,
+      `"${String(s.kelas || '').replace(/"/g, '""')}"`,
+      `"${String(s.jamDatang || '-').replace(/"/g, '""')}"`,
+      `"${String(s.jamPulang || '-').replace(/"/g, '""')}"`,
+      `"${String(s.status || '-').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Detail_Absensi_${selectedDate}_${(selectedKelas || 'Semua').replace(/\s+/g, '_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-xl">
       {/* Table Toolbar */}
@@ -133,7 +180,7 @@ export function DetailAbsensiTable({
           {/* Status Filter */}
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="px-2.5 py-1 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
           >
             <option value="">Semua Status</option>
@@ -170,16 +217,27 @@ export function DetailAbsensiTable({
             </button>
           </div>
 
-          {/* Download PDF Button */}
-          <button
-            type="button"
-            onClick={handleDownloadPDF}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg cursor-pointer"
-            title="Download PDF sesuai filter"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>DOWNLOAD PDF</span>
-          </button>
+          {/* Export Buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleDownloadCSV}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shadow-md cursor-pointer"
+              title="Export CSV (Excel) sesuai filter"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg cursor-pointer"
+              title="Download PDF sesuai filter"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 

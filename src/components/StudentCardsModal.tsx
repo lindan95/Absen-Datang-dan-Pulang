@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { Siswa } from '../types';
 import { SchoolLogo } from './SchoolLogo';
-import { X, Search, Zap, Check, QrCode as QrIcon } from 'lucide-react';
+import { X, Search, Zap, Check, QrCode as QrIcon, Printer } from 'lucide-react';
 
 function StudentQRCodeImage({ value }: { value: string }) {
   const [qrSrc, setQrSrc] = useState<string>('');
@@ -143,9 +143,20 @@ export function StudentCardsModal({
             </select>
           </div>
 
-          <span className="text-[11px] font-semibold text-slate-400">
-            Ditemukan: <span className="text-white font-mono font-bold">{filtered.length}</span> siswa
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold text-slate-400">
+              Ditemukan: <span className="text-white font-mono font-bold">{filtered.length}</span> siswa
+            </span>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-md cursor-pointer printable-button"
+              title="Cetak kartu siswa ini"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Cetak Kartu ({filtered.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* Card Grid */}
@@ -212,7 +223,7 @@ export function StudentCardsModal({
                 <button
                   type="button"
                   onClick={() => handleQuickScan(s.nis)}
-                  className={`w-full py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  className={`w-full py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer no-print ${
                     isJustScanned
                       ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'

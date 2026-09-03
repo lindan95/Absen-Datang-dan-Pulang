@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { StudentAbsenStatus } from '../types';
-import { simpanKeteranganAbsensi } from '../data/database';
+import { simpanKeteranganAbsensi, hapusKeteranganAbsensi } from '../data/database';
 import { playBeep } from '../utils/audio';
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
 
 interface KeteranganModalProps {
   student: StudentAbsenStatus | null;
@@ -54,6 +54,27 @@ export function KeteranganModal({
       onClose();
     }, 400);
   };
+
+  const handleDelete = () => {
+    if (!window.confirm(`Hapus catatan keterangan untuk ${student.nama}?`)) return;
+    setIsSaving(true);
+    const res = hapusKeteranganAbsensi(selectedDate, student.nisn);
+    setIsSaving(false);
+    if (!res.success) {
+      setMessage({ text: res.message, isError: true });
+      return;
+    }
+    setMessage({ text: 'Keterangan berhasil dihapus', isError: false });
+    setTimeout(() => {
+      onSuccess();
+      onClose();
+    }, 300);
+  };
+
+  const hasExistingKeterangan =
+    Boolean(student?.keterangan) ||
+    student?.status === 'SAKIT' ||
+    student?.status === 'IZIN';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -164,22 +185,38 @@ export function KeteranganModal({
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black hover:bg-slate-700 transition cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={handleSave}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20 cursor-pointer disabled:opacity-50"
-            >
-              {isSaving ? 'Menyimpan...' : 'Simpan Keterangan'}
-            </button>
+          <div className="flex items-center justify-between pt-1 gap-2">
+            <div>
+              {hasExistingKeterangan && (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-black hover:bg-rose-500/20 transition cursor-pointer disabled:opacity-50"
+                  title="Hapus / batalkan status keterangan siswa ini"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus</span>
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black hover:bg-slate-700 transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSave}
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20 cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? 'Menyimpan...' : 'Simpan Keterangan'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

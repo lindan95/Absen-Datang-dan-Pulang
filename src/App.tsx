@@ -48,6 +48,7 @@ export default function App() {
   const [izinPulangTarget, setIzinPulangTarget] = useState<StudentAbsenStatus | null>(null);
   const [isCardsModalOpen, setIsCardsModalOpen] = useState(false);
   const [isMobileScannerOpen, setIsMobileScannerOpen] = useState(false);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string>('');
 
   // Load and refresh dashboard data
   const refreshData = useCallback((targetDate?: string) => {
@@ -177,7 +178,11 @@ export default function App() {
           {dashboardData && (
             <>
               {/* KPI STAT CARDS (10 Kolom) */}
-              <KpiStats stats={dashboardData.stats} />
+              <KpiStats
+                stats={dashboardData.stats}
+                selectedStatus={activeStatusFilter}
+                onSelectStatus={setActiveStatusFilter}
+              />
 
               {/* Middle Section: Siswa Terlambat & Charts */}
               <ChartsSection
@@ -190,6 +195,8 @@ export default function App() {
               <DetailAbsensiTable
                 listSiswa={dashboardData.listSiswa}
                 selectedDate={activeDate}
+                statusFilter={activeStatusFilter}
+                onStatusFilterChange={setActiveStatusFilter}
                 onOpenKeterangan={(student, initialStatus) =>
                   setKeteranganTarget({ student, initialStatus })
                 }
@@ -223,6 +230,7 @@ export default function App() {
 
       <IzinPulangModal
         student={izinPulangTarget}
+        selectedDate={activeDate}
         onClose={() => setIzinPulangTarget(null)}
         onSuccess={() => refreshData(activeDate)}
       />

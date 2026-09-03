@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { RekapSiswaItem } from '../types';
 import { getRiwayatSiswaDownload } from '../data/database';
 import { downloadRiwayatSiswaPDF } from '../utils/pdfExport';
-import { ClipboardList, Download, Search, Loader2 } from 'lucide-react';
+import { ClipboardList, Download, Search, Loader2, FileSpreadsheet } from 'lucide-react';
 
 interface RekapSiswaTableProps {
   rekapSiswa: RekapSiswaItem[];
@@ -51,6 +51,52 @@ export function RekapSiswaTable({ rekapSiswa }: RekapSiswaTableProps) {
     }
   };
 
+  const handleDownloadCSV = () => {
+    if (filteredList.length === 0) {
+      alert('Tidak ada data yang sesuai untuk diekspor ke CSV.');
+      return;
+    }
+
+    const headers = [
+      'No',
+      'NISN',
+      'Nama Siswa',
+      'Kelas',
+      'Terlambat',
+      'Bolos',
+      'Alfa',
+      'Sakit',
+      'Izin',
+      'Pulang Cepat',
+      'Pulang Tanpa Datang',
+      'Total Kejadian',
+    ];
+
+    const rows = filteredList.map((s, index) => [
+      index + 1,
+      `"${String(s.nisn || '').replace(/"/g, '""')}"`,
+      `"${String(s.nama || '').replace(/"/g, '""')}"`,
+      `"${String(s.kelas || '').replace(/"/g, '""')}"`,
+      s.terlambat || 0,
+      s.bolos || 0,
+      s.alfa || 0,
+      s.sakit || 0,
+      s.izin || 0,
+      s.izinPulang || 0,
+      s.pulangTanpaDatang || 0,
+      s.totalKejadian || 0,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Rekap_Kehadiran_Siswa_${(selectedKelas || 'Semua').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-xl">
       {/* Table Toolbar */}
@@ -91,6 +137,17 @@ export function RekapSiswaTable({ rekapSiswa }: RekapSiswaTableProps) {
               </option>
             ))}
           </select>
+
+          {/* Export CSV Button */}
+          <button
+            type="button"
+            onClick={handleDownloadCSV}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shadow-md cursor-pointer"
+            title="Export Rekap Siswa ke format CSV (Excel)"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>EXPORT CSV</span>
+          </button>
         </div>
       </div>
 

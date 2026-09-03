@@ -314,6 +314,19 @@ function generateInitialHistoricalRecords(students: Siswa[]): {
 }
 
 // LocalStorage helpers
+type AbsenSyncListener = (record: AbsenRecord) => void;
+type KeteranganSyncListener = (record: KeteranganRecord) => void;
+let gasAbsenSyncListener: AbsenSyncListener | null = null;
+let gasKeteranganSyncListener: KeteranganSyncListener | null = null;
+
+export function registerGasSyncListeners(
+  onAbsen: AbsenSyncListener,
+  onKeterangan: KeteranganSyncListener
+) {
+  gasAbsenSyncListener = onAbsen;
+  gasKeteranganSyncListener = onKeterangan;
+}
+
 export function loadStudents(): Siswa[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SISWA);
@@ -721,7 +734,9 @@ export function getStudentFromQR(qrInput: string): Siswa | null {
 export function catatAbsen(
   qrInput: string,
   tipeAbsen: 'DATANG' | 'PULANG' | 'IZIN_PULANG',
-  alasanIzin?: string
+  alasanIzin?: string,
+  targetDate?: string,
+  customTime?: string
 ): {
   success: boolean;
   message: string;
@@ -749,8 +764,8 @@ export function catatAbsen(
     };
   }
 
-  const todayStr = getTodayString();
-  const timeStr = getCurrentTimeString();
+  const todayStr = targetDate && targetDate.trim() ? targetDate.trim() : getTodayString();
+  const timeStr = customTime && customTime.trim() ? customTime.trim() : getCurrentTimeString();
   const records = loadAbsenRecords();
   const existingIdx = records.findIndex(
     (r) => r.tanggal === todayStr && r.nis === siswa.nis
@@ -788,6 +803,9 @@ export function catatAbsen(
       records.push(newRecord);
     }
     saveAbsenRecords(records);
+    if (gasAbsenSyncListener) {
+      try { gasAbsenSyncListener(newRecord); } catch (e) { console.warn(e); }
+    }
 
     return {
       success: true,

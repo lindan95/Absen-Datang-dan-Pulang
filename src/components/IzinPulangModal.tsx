@@ -6,12 +6,14 @@ import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface IzinPulangModalProps {
   student: StudentAbsenStatus | null;
+  selectedDate?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export function IzinPulangModal({
   student,
+  selectedDate,
   onClose,
   onSuccess,
 }: IzinPulangModalProps) {
@@ -22,12 +24,14 @@ export function IzinPulangModal({
 
   if (!student) return null;
 
+  const activeDate = selectedDate || getTodayString();
+
   const handleSave = () => {
     setIsSaving(true);
     setMessage(null);
 
     const fullAlasan = `${alasanTipe}${catatan.trim() ? ` - ${catatan.trim()}` : ''}`;
-    const res = catatAbsen(student.nisn, 'IZIN_PULANG', fullAlasan);
+    const res = catatAbsen(student.nisn, 'IZIN_PULANG', fullAlasan, activeDate);
 
     setIsSaving(false);
 
@@ -82,7 +86,7 @@ export function IzinPulangModal({
               <span className="font-semibold text-slate-300">{student.kelas}</span>
             </p>
             <p className="text-[10px] text-amber-400 pt-1 border-t border-slate-800/80 mt-1.5">
-              Tanggal: <span className="font-bold">{getTodayString()}</span> • Jam Pulang:{' '}
+              Tanggal: <span className="font-bold">{activeDate}</span> • Jam Pulang:{' '}
               <span className="font-mono font-bold">{currentTime}</span>
             </p>
           </div>

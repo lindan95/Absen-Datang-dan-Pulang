@@ -44,6 +44,26 @@ export interface LogWARecord {
   catatan?: string;
 }
 
+export interface GasSyncLog {
+  id: string;
+  timestamp: string;
+  action: 'PUSH_ALL' | 'PUSH_TODAY' | 'PULL_DATA' | 'PING_TEST' | 'AUTO_SYNC';
+  status: 'SUCCESS' | 'ERROR';
+  message: string;
+  itemCount?: number;
+}
+
+export interface GasDatabaseConfig {
+  webAppUrl: string;
+  spreadsheetUrl?: string;
+  autoSyncOnScan: boolean;
+  autoSyncOnKeterangan: boolean;
+  lastSyncTime?: string;
+  lastSyncStatus?: 'SUCCESS' | 'ERROR' | 'IDLE';
+  lastSyncMessage?: string;
+  syncHistory: GasSyncLog[];
+}
+
 export interface AppSettings {
   batasDatang: string; // HH:mm:ss e.g. '07:00:00'
   batasAlfa: string;   // HH:mm:ss e.g. '08:00:00'

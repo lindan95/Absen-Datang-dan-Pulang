@@ -1,0 +1,6 @@
+{
+  "name": "Terminal & Dashboard Absensi Siswa",
+  "description": "Terminal scanner absensi kartu/QR real-time dan dashboard analitik kehadiran siswa SMA Negeri 05 Bombana.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
